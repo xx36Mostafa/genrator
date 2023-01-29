@@ -1,4 +1,120 @@
+# PreInstalled PyPackages
+import asyncio
+import os , time
+import random
+# Pip Install Packages
+import botright
+# Imports from Files
+import base64
+import platform
+import re
+import tempfile
+import httpx
 
+names_list = ["Emily", "Madison", "Elizabeth", "Abigail", "Isabella", "Samantha", "Avery", "Ella", "Natalie", "Addison",
+              "Michael", "Jacob", "Matthew", "Nicholas", "Christopher", "Joseph", "Daniel", "Tyler", "Benjamin", "Andrew",
+              "David", "Ryan", "Anthony", "John", "Jonathan", "Luke", "Christian", "Isaac", "Derek", "Cameron", "Jordan",
+              "Olivia", "Sophia", "Ava", "Isabella", "Mia", "Charlotte", "Amelia", "Evelyn", "Abigail", "Harper", "Emily",
+              "Elizabeth", "Avery", "Ella", "Madison", "Scarlett", "Victoria", "Aria", "Grace","BoDa","Mariam","Ayman","Nasser"]
+def get_random_line_and_numbers():
+    selected_line = random.choice(names_list)
+    selected_numbers = random.sample(range(10), 3)
+    for i in selected_numbers:
+        selected_line +=str(i)
+    return selected_line
+
+res = httpx.get("https://discord.com/login").text
+file_with_build_num = 'https://discord.com/assets/'+re.compile(r'assets/+([a-z0-9]+)\.js').findall(res)[-2]+'.js'
+req_file_build = httpx.get(file_with_build_num).text
+index_of_build_num = req_file_build.find('buildNumber')+24
+DISCORD_BUILD_NUM = int(req_file_build[index_of_build_num:index_of_build_num+6])
+
+class Discord:
+    async def get_headers(self, payload):
+        cookies = await self.browser.cookies()
+        __dcfduid = [item for item in cookies if item['name'] == "__dcfduid"][0]["value"]
+        __sdcfduid = [item for item in cookies if item['name'] == "__sdcfduid"][0]["value"]
+        cookies = f"__dcfduid={__dcfduid}; __sdcfduid={__sdcfduid}"
+
+        super_props = {"os": platform.system(), "browser":"Firefox", "release_channel":"stable", "client_version": self.browser.browser.version, "os_version": str(platform.version()), "os_arch": "x64" if platform.machine().endswith('64') else "x86", "system_locale": self.browser.faker.locale, "client_build_number": DISCORD_BUILD_NUM, "client_event_source": None}
+        super_props = base64.b64encode(str(super_props).encode()).decode()
+
+        headers = {
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br",
+            "accept-language": "de,de-DE;q=0.9",
+            "authorization": self.token,
+            "content-length": str(len(str(payload))),
+            "content-type": "application/json",
+            "cookie": cookies,
+            "origin": "https://discord.com",
+            "referer": "https://discord.com/channels/@me",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "user-agent": self.browser.faker.useragent,
+            "x-discord-locale": "en",
+            "x-super-properties": super_props,
+        }
+        return headers
+
+    async def humanize_token(self):
+        await self.page.goto("https://discord.com/channels/@me")
+        await self.page.wait_for_timeout(1000)
+        # Clicking Settings Button
+        settings_button = self.page.locator('[class *= "button-12Fmur"]').last
+        await settings_button.click()
+        # Click Profile Button
+        await self.page.wait_for_timeout(500)
+        profile_button = self.page.locator('[class *= "item-3XjbnG"]').nth(6)
+        await profile_button.click()
+
+        await self.page.wait_for_timeout(random.randint(2000, 3000))
+
+        # Setting Random Avatar
+        pics = httpx.get("https://api.github.com/repos/itschasa/Discord-Scraped/git/trees/cbd70ab66ea1099d31d333ab75e3682fd2a80cff")
+        random_pic = random.choice(pics.json().get("tree")).get("path")
+        pic_url = f"https://raw.githubusercontent.com/itschasa/Discord-Scraped/main/avatars/{random_pic}"
+        pic = httpx.get(pic_url).content
+
+        temp_file = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
+        temp_file.write(pic)
+        temp_file.file.seek(0)  # change the position to the beginning of the file
+
+        self.page.on("filechooser", lambda file_chooser: file_chooser.set_files(temp_file.name))
+
+        upload_avatar_button = self.page.locator('[class *= "buttonsContainer-12kYno"]').locator('[class *= "lookFilled-yCfaCM "]')
+        await upload_avatar_button.click()
+
+        await self.page.wait_for_timeout(random.randint(500, 1000))
+
+        upload_own = self.page.locator('[class *= "file-input"]')
+        await upload_own.click()
+
+        await self.page.wait_for_timeout(random.randint(500, 1000))
+        confirm_button = self.page.locator('[class *= "button-f2h6uQ"]').last
+        await confirm_button.click()
+
+        temp_file.close()
+        os.unlink(temp_file.name)
+
+
+        await self.page.wait_for_timeout(random.randint(2000, 3000))
+
+        # Setting AboutME
+        try:
+            quote = httpx.get("https://free-quotes-api.herokuapp.com")
+            quote = quote.json().get("quote")
+        except:
+            self.logger.warning('Couldnt Get a Random Quote, Setting "Dislock" as AboutMe')
+            quote = "Dislock"
+
+        profile_button = self.page.locator('[role="textbox"]')
+        await profile_button.click()
+        await self.page.keyboard.type(quote)
+
+        await self.page.wait_for_timeout(random.randint(500, 1000))
+        confirm_button = self.page.locator('[class *= "colorGreen-3y-Z79"]').last
         await confirm_button.click()
 
         # Going to Hypesquad Page
