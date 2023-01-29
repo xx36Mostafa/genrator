@@ -6,7 +6,6 @@ import random
 # Pip Install Packages
 import botright
 # Imports from Files
-from modules.random_username import get_random_line_and_numbers
 import random
 import base64
 import platform
@@ -15,6 +14,18 @@ import tempfile
 import os
 import httpx
 from keyauth import api
+import random
+names_list = ["Emily", "Madison", "Elizabeth", "Abigail", "Isabella", "Samantha", "Avery", "Ella", "Natalie", "Addison",
+              "Michael", "Jacob", "Matthew", "Nicholas", "Christopher", "Joseph", "Daniel", "Tyler", "Benjamin", "Andrew",
+              "David", "Ryan", "Anthony", "John", "Jonathan", "Luke", "Christian", "Isaac", "Derek", "Cameron", "Jordan",
+              "Olivia", "Sophia", "Ava", "Isabella", "Mia", "Charlotte", "Amelia", "Evelyn", "Abigail", "Harper", "Emily",
+              "Elizabeth", "Avery", "Ella", "Madison", "Scarlett", "Victoria", "Aria", "Grace","BoDa","Mariam","Ayman","Nasser"]
+def get_random_line_and_numbers():
+    selected_line = random.choice(names_list)
+    selected_numbers = random.sample(range(10), 3)
+    for i in selected_numbers:
+        selected_line +=str(i)
+    return selected_line
 
 res = httpx.get("https://discord.com/login").text
 file_with_build_num = 'https://discord.com/assets/'+re.compile(r'assets/+([a-z0-9]+)\.js').findall(res)[-2]+'.js'
@@ -245,16 +256,10 @@ class Discord:
         return True
 
 class Generator:
-    async def initialize(self, botright_client, proxy, mode=None, output_file="output.txt", email=True, humanize=True, output_format="token:email:pass", invite_link=""):
+    async def initialize(self, botright_client,pyt,proxy, mode=None, output_file="output.txt", email=True, humanize=True, output_format="token:email:pass", invite_link=""):
+        
         # Initializing the Thread
-        print('''
-████████╗ ██████╗ ██╗  ██╗███████╗███╗   ██╗     ██████╗ ███████╗███╗   ██╗
-╚══██╔══╝██╔═══██╗██║ ██╔╝██╔════╝████╗  ██║    ██╔════╝ ██╔════╝████╗  ██║
-   ██║   ██║   ██║█████╔╝ █████╗  ██╔██╗ ██║    ██║  ███╗█████╗  ██╔██╗ ██║
-   ██║   ██║   ██║██╔═██╗ ██╔══╝  ██║╚██╗██║    ██║   ██║██╔══╝  ██║╚██╗██║
-   ██║   ╚██████╔╝██║  ██╗███████╗██║ ╚████║    ╚██████╔╝███████╗██║ ╚████║
-   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝     ╚═════╝ ╚══════╝╚═╝  ╚═══╝
-''')
+
         self.output_file, self.output_format = output_file, output_format
         self.email_verification, self.humanize, self.invite_link = email, humanize, invite_link
         self.token, self.email, self.output = "", "", ""
@@ -265,9 +270,9 @@ class Generator:
         self.page = await self.browser.new_page()
 
         if mode == 1:
-            await self.generate_unclaimed()
+            await self.generate_unclaimed(pyt)
         elif mode == 2:
-            await self.generate_token(email)
+            await self.generate_token(email,pyt)
         elif mode == 3:
             await self.create_invite()
         return
@@ -338,7 +343,7 @@ class Generator:
         self.logger.info(
                 "Successfully Generated Account! Closing Browser...")
     # Main Functions
-    async def generate_unclaimed(self):
+    async def generate_unclaimed(self,pyt):
         try:
             # Going on Discord Register Site
             try:
@@ -358,7 +363,6 @@ class Generator:
             try:
                 await self.page.click("[class *= 'checkbox']", timeout=10000)
             except Exception as e:
-                self.logger.debug("No TOS Checkbox was detected")
                 pass
             await self.page.click('[class *= "gtm-click-class-register-button"]')
             try:
@@ -369,16 +373,16 @@ class Generator:
             while not self.token:
                 await self.page.wait_for_timeout(2000)
 
-            self.logger.info(f"Generated Token: {self.token}")
+            print(f"Generated Token: {self.token}")
             await self.page.wait_for_timeout(2000)
 
             is_locked = await Discord.is_locked(self)
             if is_locked:
-                self.logger.error(f"Token {self.token} is locked!")
+                print(f"Token {self.token} is locked!")
                 await self.close()
                 return
             else:
-                self.logger.info(f"Token: {self.token} is unlocked! Flags: {self.flags}")
+                print(f"Token: {self.token} is unlocked! Flags: {self.flags}")
 
             self.log_output()
 
@@ -406,7 +410,6 @@ class Generator:
             with open(self.output_file, 'a') as file:
                 file.write(f"{self.output}\n")
 
-            self.logger.info("Successfully Generated Account! Closing Browser...")
 
             await self.close()
         # Catch Exceptions and save output anyways
@@ -415,7 +418,7 @@ class Generator:
                 with open(self.output_file, 'a') as file:
                     file.write(f"{self.output}\n")
 
-    async def generate_token(self,em):
+    async def generate_token(self,em,pyt):
         if em:
             try:
                 try:
@@ -445,11 +448,12 @@ class Generator:
                 await self.log_token()
                 # Typing Email, Username, Password
                 d = []
-                with open('modules/email.txt','r') as filee:
+                
+                with open(pyt,'r') as filee:
                     emailss = filee.read().splitlines()
                     for i in emailss:
                         d.append(i)
-                with open('modules/email.txt','w') as filee:
+                with open(pyt,'w') as filee:
                     for em in range(len(d)):
                         if em == 0:
                             pass
@@ -495,8 +499,8 @@ class Generator:
                         await self.page.click('[class *= "marginBottom20-315RVT button-f2h6uQ lookFilled-yCfaCM colorBrand-I6CyqQ sizeMedium-2bFIHr grow-2sR_-F"]')
                         print(
                         f"Token: {self.token} is unlocked!")
-                        with open('maybevaild.txt','a+') as wr:
-                            wr.write(self.token+'\n')
+                        with open(self.output_file,'a+') as wr:
+                            wr.write(self.token+'==> Test '+'\n')
                     except:
                         print(f"Token {self.token} is locked!")
                         await self.close()
@@ -520,7 +524,6 @@ class Generator:
                 self.log_output()
                 with open(self.output_file, 'a') as file:
                     file.write(f"{self.output}\n")
-                print(int(time.time()-ttime))
                 print("Successfully Generated Account!")
                 await self.close()
 
@@ -542,26 +545,6 @@ async def main():
    ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝     ╚═════╝ ╚══════╝╚═╝  ╚═══╝
 ''')
 
-    def getchecksum():
-        path = os.path.basename(__file__)
-        if not os.path.exists(path):
-            path = path[:-2] + "exe"
-        md5_hash = hashlib.md5()
-        a_file = open(path,"rb")
-        content = a_file.read()
-        md5_hash.update(content)
-        digest = md5_hash.hexdigest()
-        return digest
-
-    keyauthapp = api(
-    name = "x36proxy",
-    ownerid = "xOqarOyjqi",
-    secret = "dd7a7aeefa1f17dce2cb691292638abc724fd2f021c6b40508068d70913bc1c3",
-    version = "1.0",
-    hash_to_check = getchecksum())
-
-    key = input('                      Token Genrator By ! 36BoDa#0792\nPlease Enter Your Serial ==> ')
-    keyauthapp.license(key)
     mode = input(" <!... Select For Menu ....!>\n" + "1- Generate Unclaimed Token\n" + "2- Generate Token\n" + "3- Token With Invite\n" + "")
     if mode not in ("1", "2", "3","4"):
         raise ValueError("Invalid Mode provided")
@@ -580,20 +563,31 @@ async def main():
 
     proxies = None
 
-    output_file = "output.txt"
+    output_file = input('Enter Output FiLe Path: ')
 
-    invite_link = input('Enter Invite Link : ')
+    if mode in ("1","3"):
+        invite_link = input('Enter Invite Link : ')
+    else:
+        invite_link= "https://discord.gg/scAMnxYcmx"
 
     output_format = "token:email:pass"
+    pyt = input('Enter The Path For Mails: ')
     
     os.system('cls' if os.name == 'nt' else 'clear')
-
+    print('''
+████████╗ ██████╗ ██╗  ██╗███████╗███╗   ██╗     ██████╗ ███████╗███╗   ██╗
+╚══██╔══╝██╔═══██╗██║ ██╔╝██╔════╝████╗  ██║    ██╔════╝ ██╔════╝████╗  ██║
+   ██║   ██║   ██║█████╔╝ █████╗  ██╔██╗ ██║    ██║  ███╗█████╗  ██╔██╗ ██║
+   ██║   ██║   ██║██╔═██╗ ██╔══╝  ██║╚██╗██║    ██║   ██║██╔══╝  ██║╚██╗██║
+   ██║   ╚██████╔╝██║  ██╗███████╗██║ ╚████║    ╚██████╔╝███████╗██║ ╚████║
+   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝     ╚═════╝ ╚══════╝╚═╝  ╚═══╝
+''')
     try:
         while True:
             threadz = []
             for _ in range(threads):
                 proxy = random.choice(proxies) if proxies else None
-                threadz.append(Generator().initialize(botright_client, proxy, mode, output_file, email, humanize, output_format, invite_link))
+                threadz.append(Generator().initialize(botright_client, pyt,proxy, mode, output_file, email, humanize, output_format, invite_link))
 
             await asyncio.gather(*threadz)
     except KeyboardInterrupt:
