@@ -1,19 +1,16 @@
 # PreInstalled PyPackages
 import asyncio
-import hashlib
 import os , time
 import random
 # Pip Install Packages
 import botright
 # Imports from Files
-import random
 import base64
 import platform
 import re
 import tempfile
-import os
 import httpx
-import random
+
 names_list = ["Emily", "Madison", "Elizabeth", "Abigail", "Isabella", "Samantha", "Avery", "Ella", "Natalie", "Addison",
               "Michael", "Jacob", "Matthew", "Nicholas", "Christopher", "Joseph", "Daniel", "Tyler", "Benjamin", "Andrew",
               "David", "Ryan", "Anthony", "John", "Jonathan", "Luke", "Christian", "Isaac", "Derek", "Cameron", "Jordan",
